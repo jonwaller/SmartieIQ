@@ -1,0 +1,5 @@
+C:\Users\Jonathan\Documents\Visual Studio 2008\Projects\SmartieIQ1\SmartieIQ1\bin\Debug\SmartieIQ1.exe
+C:\Users\Jonathan\Documents\Visual Studio 2008\Projects\SmartieIQ1\SmartieIQ1\bin\Debug\SmartieIQ1.pdb
+C:\Users\Jonathan\Documents\Visual Studio 2008\Projects\SmartieIQ1\SmartieIQ1\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Jonathan\Documents\Visual Studio 2008\Projects\SmartieIQ1\SmartieIQ1\obj\Debug\SmartieIQ1.exe
+C:\Users\Jonathan\Documents\Visual Studio 2008\Projects\SmartieIQ1\SmartieIQ1\obj\Debug\SmartieIQ1.pdb
