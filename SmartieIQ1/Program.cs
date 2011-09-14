@@ -23,6 +23,7 @@ namespace SmartieIQ
 
                 List<string> inItems = readItemsFromConsole();
 
+				//--
                 //writeItems("Input:", inItems);
 
                 List<string> outItems = expandItems(inItems, inItems.Count + 1);
