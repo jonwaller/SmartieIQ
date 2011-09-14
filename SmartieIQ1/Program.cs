@@ -126,10 +126,60 @@ namespace SmartieIQ
             return newSequence;
         }
 
-        private static Func<int, List<int?>, int> findItemGenerator(List<int?> sequenceWithNulls)
+        static List<Func<int, List<int?>, int>> functions =
+            new List<Func<int, List<int?>, int>>{
+                                                         new Func<int, List<int?>, int>(
+                                                             (
+                                                                 indexOfItemWanted, sequenceWithNulls) => indexOfItemWanted+0
+                                                             ),
+                                                         new Func<int, List<int?>, int>(
+                                                             (
+                                                                 indexOfItemWanted, sequenceWithNulls) => indexOfItemWanted+1
+                                                             ),
+                                                         new Func<int, List<int?>, int>(
+                                                             (
+                                                                 indexOfItemWanted, sequenceWithNulls) => indexOfItemWanted+2
+                                                             ),
+                                                         new Func<int, List<int?>, int>(
+                                                             (
+                                                            indexOfItemWanted, sequenceWithNulls) => (indexOfItemWanted+0)*2
+                                                             ),
+                                                         new Func<int, List<int?>, int>(
+                                                             (
+                                                                 indexOfItemWanted, sequenceWithNulls) => (indexOfItemWanted+1)*2
+                                                             ),
+                                                         new Func<int, List<int?>, int>(
+                                                             (
+                                                                 indexOfItemWanted, sequenceWithNulls) => (indexOfItemWanted+2)*2
+                                                                 )
+            };
+
+        private static Func<int, List<int?>, int> findItemGenerator(List<int?> givenSequence)
         {
-            //Not a very exciting function.
-            return (indexOfItemWanted, sequenceKnown) => indexOfItemWanted+1;
+            foreach (Func<int, List<int?>, int> function in functions)
+            {
+                if (isFunctionIsValidForAllKnownItemsInSequence(function, givenSequence))
+                {
+                    return function;
+                }
+            }
+            
+            throw new Exception("No item generator function found");
+        }
+
+        private static bool isFunctionIsValidForAllKnownItemsInSequence(Func<int, List<int?>, int> function, List<int?> givenItems)
+        {
+            for (int i = 0; i < givenItems.Count; i++)
+            {
+                if (givenItems[i] != null) //If it's null then this item is deemed ok.
+                {
+                    if (function(i,givenItems) != givenItems[i])
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
     }
