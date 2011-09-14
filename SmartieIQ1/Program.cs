@@ -9,136 +9,128 @@ namespace SmartieIQ
 {
     class Program
     {
-        private struct Operators
-        {
-            public List<float> Operatos;
-
-        }
+        /* Console and testing */
 
         static void Main(string[] args)
         {
-            while (true)
-            {
-                Console.WriteLine("Waiting for input: (e.g. 2, 4, 6, 8)");
+            //Nullable int
+            List<int?> question = new List<int?> { 1, 2, 3, 4, 5, null };
+            List<int?> answer = new List<int?> { 1, 2, 3, 4, 5, 6 };
+            isSameConsoleWrite(fillMissing(question), answer);
 
-                List<string> inItems = readItemsFromConsole();
+            question = new List<int?> { 2, 4, 6, 8, null };
+            answer = new List<int?> { 2, 4, 6, 8, 10 };
+            isSameConsoleWrite(fillMissing(question), answer);
 
-				//--
-                //writeItems("Input:", inItems);
+            question = new List<int?> { 2, -4, 8, -16, 32, null };
+            answer = new List<int?> { 2, -4, 8, -16, 32, -64 };
+            isSameConsoleWrite(fillMissing(question), answer);
 
-                List<string> outItems = expandItems(inItems, inItems.Count + 1);
-                writeItems("Output:", outItems);
+            /*
+            question = new List<int?> { 1, 3, 5, 7, 9, null };
+            answer = new List<int?> { 1, 3, 5, 7, 9, 11 };
+            isSameConsoleWrite(fillMissing(question), answer);
 
-                exitConsole();
-            }
+            question = new List<int?> { 1, 1, 2, 3, 5, 8, null };
+            answer = new List<int?> { 1, 1, 2, 3, 5, 8, 13 }; //Fib
+            isSameConsoleWrite(fillMissing(question), answer);
+
+            question = new List<int?> { 154, 162, 170, 178, 186, null };
+            answer = new List<int?> { 154, 162, 170, 178, 186, 194 }; //+8
+            isSameConsoleWrite(fillMissing(question), answer);
+
+            question = new List<int?> { 2, -4, 8, -16, 32, null };
+            answer = new List<int?> { 2, -4, 8, -16, 32, -64 };
+            isSameConsoleWrite(fillMissing(question), answer);
+
+            question = new List<int?> { 1, 4, null, null, null, 36, null };
+            answer = new List<int?> { 1, 4, 9, 16, 25, 36, 49 }; //Sqr
+            isSameConsoleWrite(fillMissing(question), answer);
+            */
+
+            exitConsole();
         }
-
-        private static void writeItems(String caption, List<string> items)
-        {
-            Console.WriteLine(caption);
-            foreach (string item in items)
-            {
-                Console.WriteLine("  '" + item + "'");
-            }
-            Console.WriteLine();
-        }
-
-        private static List<string> expandItems(List<string> inItems, int requestedLength)
-        {
-            List<float> points = new List<float>();
-            for (int x = 0; x < inItems.Count; x++)
-            {
-                points.Add(
-                    float.Parse(inItems[x])
-                );
-            }
-
-            List<float> fitPoints = fitLagrange(points);
-            
-            List<string> outItems = new List<string>();
-
-            for (int i = 0; i < requestedLength; i++) {
-                outItems.Add(fitPoints[i].ToString());
-            }
-
-            return outItems;
-        }
-
-        private static List<float> fitLagrange(List<float> floats) {
-
-            List<PointF> points = new List<PointF>();
-
-            for (int i = 0; i < floats.Count; i++)
-            {
-                points.Add(new PointF(i,floats[i]));
-            }
-
-            return fitLagrange(points);
-        }
-
-        private static List<float> fitLagrange(List<PointF> pointList)
-        {
-            List<Operators> OpList = new List<Operators>();
-            List<float> Xs = new List<float>();
-            List<float> Ys = new List<float>();
-
-            if (pointList.Count > 0)
-            {
-                //compute lagrange operator for each X coordinate
-                for (int x = 0; x < 2000; x++)
-                {
-                    //list of float to hold the Lagrange operators
-                    List<float> L = new List<float>();
-                    //Init the list with 1's
-                    for (int i = 0; i < pointList.Count; i++)
-                    {
-                        L.Add(1);
-                    }
-                    for (int i = 0; i < L.Count; i++)
-                    {
-                        for (int k = 0; k < pointList.Count; k++)
-                        {
-                            if (i != k)
-                                L[i] *= (float)(x - pointList[k].X) / (pointList[i].X - pointList[k].X);
-                        }
-                    }
-                    Operators o = new Operators();
-                    o.Operatos = L;
-                    OpList.Add(o);
-                    Xs.Add(x);
-
-                }
-
-                //Computing the Polynomial P(x) which is y in our curve
-                foreach (Operators O in OpList)
-                {
-                    float y = 0;
-                    for (int i = 0; i < pointList.Count; i++)
-                    {
-                        y += O.Operatos[i] * pointList[i].Y;
-                    }
-
-                    Ys.Add(y);
-                }
-            }
-            return Ys;
-        }
- 
 
         private static void exitConsole()
         {
             Console.WriteLine("Finished.");
             Console.ReadLine();
         }
-
-        private static List<string> readItemsFromConsole()
+        
+        private static void isSameConsoleWrite(List<int?> attemptedAnswer, List<int?> correctAnswer)
         {
-            String inputLine = Console.ReadLine();
+            Console.WriteLine("Attempted answer: " + makeHumanReadable(attemptedAnswer));
+            Console.WriteLine("Correct answer:   " + makeHumanReadable(correctAnswer));
+            if (isSame(attemptedAnswer, correctAnswer))
+            {
+                Console.WriteLine("PASS");
+            }
+            else
+            {
+                Console.WriteLine("FAIL");
+
+            }
             Console.WriteLine();
-
-            List<string> items = inputLine.Split(',').Select(p => p.Trim()).ToList();
-
-            return items;
         }
+
+        private static string makeHumanReadable(List<int?> list)
+        {
+            String outStr = "";
+
+            outStr = "{";
+            
+            foreach(int? item in list){
+                String itemStr = (item==null) ? "NULL" : item.ToString();
+                outStr = outStr + itemStr + ", ";
+            }
+
+            if (outStr.Length > 1)
+            {
+                outStr = outStr.Substring(0, outStr.Length - 2); // To cut of the last ", "
+            }
+
+            outStr = outStr + "}";
+
+            return outStr;
+        }
+
+        private static bool isSame(List<int?> list1, List<int?> list2)
+        {
+            if (list1.Count != list2.Count) return false;
+
+            for (int i = 0; i < list1.Count; i++)
+            {
+                if (list1[i] != list2[i])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /* Real code :) */
+
+        private static List<int?> fillMissing(List<int?> sequenceWithNulls)
+        {
+            Func<int, List<int?>, int> itemGenerator = findItemGenerator(sequenceWithNulls);
+            
+            List<int?> newSequence=new List<int?>();
+            for (int i = 0; i < sequenceWithNulls.Count; i++)
+            {
+                int? item = sequenceWithNulls[i];
+                if (item==null){
+                    item = itemGenerator(i, sequenceWithNulls);
+                }
+                newSequence.Add(item);
+            }
+            return newSequence;
+        }
+
+        private static Func<int, List<int?>, int> findItemGenerator(List<int?> sequenceWithNulls)
+        {
+            //Not a very exciting function.
+            return (indexOfItemWanted, sequenceKnown) => indexOfItemWanted+1;
+        }
+
     }
 }
