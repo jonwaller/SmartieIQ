@@ -16,36 +16,40 @@ namespace SmartieIQ
             //Nullable int
             List<int?> question = new List<int?> { 1, 2, 3, 4, 5, null };
             List<int?> answer = new List<int?> { 1, 2, 3, 4, 5, 6 };
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question, fillMissing(question), answer);
+
+            question = new List<int?> { 1, 2, null, 4, 5 };
+            answer = new List<int?> { 1, 2, 3, 4, 5 };
+            isSameConsoleWrite(question, fillMissing(question), answer);
 
             question = new List<int?> { 2, 4, 6, 8, null };
             answer = new List<int?> { 2, 4, 6, 8, 10 };
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question, fillMissing(question), answer);
 
             question = new List<int?> { 2, -4, 8, -16, 32, null };
             answer = new List<int?> { 2, -4, 8, -16, 32, -64 };
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question, fillMissing(question), answer);
 
             /*
             question = new List<int?> { 1, 3, 5, 7, 9, null };
             answer = new List<int?> { 1, 3, 5, 7, 9, 11 };
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question,fillMissing(question), answer);
 
             question = new List<int?> { 1, 1, 2, 3, 5, 8, null };
             answer = new List<int?> { 1, 1, 2, 3, 5, 8, 13 }; //Fib
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question,fillMissing(question), answer);
 
             question = new List<int?> { 154, 162, 170, 178, 186, null };
             answer = new List<int?> { 154, 162, 170, 178, 186, 194 }; //+8
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question,fillMissing(question), answer);
 
             question = new List<int?> { 2, -4, 8, -16, 32, null };
             answer = new List<int?> { 2, -4, 8, -16, 32, -64 };
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question,fillMissing(question), answer);
 
             question = new List<int?> { 1, 4, null, null, null, 36, null };
             answer = new List<int?> { 1, 4, 9, 16, 25, 36, 49 }; //Sqr
-            isSameConsoleWrite(fillMissing(question), answer);
+            isSameConsoleWrite(question,fillMissing(question), answer);
             */
 
             exitConsole();
@@ -57,18 +61,20 @@ namespace SmartieIQ
             Console.ReadLine();
         }
         
-        private static void isSameConsoleWrite(List<int?> attemptedAnswer, List<int?> correctAnswer)
+        private static void isSameConsoleWrite(List<int?> question, List<int?> attemptedAnswer, List<int?> correctAnswer)
         {
-            Console.WriteLine("Attempted answer: " + makeHumanReadable(attemptedAnswer));
-            Console.WriteLine("Correct answer:   " + makeHumanReadable(correctAnswer));
             if (isSame(attemptedAnswer, correctAnswer))
             {
-                Console.WriteLine("PASS");
+                Console.WriteLine("PASS:");
+                Console.WriteLine("  Question: " + makeHumanReadable(question));
+                Console.WriteLine("  Answer:   " + makeHumanReadable(attemptedAnswer));
             }
             else
             {
-                Console.WriteLine("FAIL");
-
+                Console.WriteLine("FAIL:");
+                Console.WriteLine("  Question:        " + makeHumanReadable(question));
+                Console.WriteLine("  System's answer: " + makeHumanReadable(attemptedAnswer));
+                Console.WriteLine("  Correct answer:  " + makeHumanReadable(correctAnswer));
             }
             Console.WriteLine();
         }
@@ -170,8 +176,6 @@ namespace SmartieIQ
 
             if (itemGenerator == null) throw new Exception("Could not find item generator function.");
 
-            Console.WriteLine(itemGenerator);
-
             List<int?> newSequence=new List<int?>();
             for (int i = 0; i < sequenceWithNulls.Count; i++)
             {
@@ -197,9 +201,9 @@ namespace SmartieIQ
 
         private static Func<int?, List<int?>, int?> findItemGeneratorFunction(List<int?> currentSequence, List<int?> targetSequence, int maxDepth)
         {
-            Console.WriteLine(maxDepth);
-            Console.WriteLine(makeHumanReadable(currentSequence));
-            Console.WriteLine();
+            //Console.WriteLine(maxDepth);
+            //Console.WriteLine(makeHumanReadable(currentSequence));
+            //Console.WriteLine();
             
             if (isSameIgnoreNull(currentSequence,targetSequence))
             {
