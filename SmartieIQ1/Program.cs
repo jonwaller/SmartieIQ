@@ -108,12 +108,70 @@ namespace SmartieIQ
             return true;
         }
 
+        private static bool isSameIgnoreNull(List<int?> list1, List<int?> list2)
+        {
+            if (list1.Count != list2.Count) return false;
+
+            for (int i = 0; i < list1.Count; i++)
+            {
+                if (list1[i] != list2[i] && list1[i] != null && list2[i] != null)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         /* Real code :) */
 
+
+
+        static Func<int?, List<int?>, int?> identityFunction = new Func<int?, List<int?>, int?>((value,list) => value);
+      
+        static List<Func<int?, List<int?>, int?>> basicFunctions =
+                 new List<Func<int?, List<int?>, int?>>{
+                                        
+                     new Func<int?, List<int?>, int?>( //list[i]
+                     (value, list) => 
+                         (value==null || value<0 || value>=list.Count) ? 
+                            null:list[value.GetValueOrDefault()]
+                            //Value will never be null, so treat this as list[value] (It's a type thing)
+                    ),
+                    
+                    new Func<int?, List<int?>, int?>( 
+                        (value, list)=>1
+                    ),
+
+                    new Func<int?, List<int?>, int?>(
+                        (value, list)=>-1
+                    ),
+
+                    new Func<int?, List<int?>, int?>( 
+                        (value, list)=>value+1
+                    ),
+
+                    new Func<int?, List<int?>, int?>( 
+                        (value, list)=>value*2
+                    )
+            };
+        /* NOT YET
+        static List<Func<int?, int?, int?>> basicOperators =
+            new List<Func<int?, int?, int?>>{
+                 new Func<int?, int?, int?>(
+                    (i, j) =>(i==null||j==null)?null:i+j
+                ),
+                 new Func<int?, int?, int?>(
+                     (i, j) =>(i==null||j==null)?null:i*j
+                )
+         };
+        */
         private static List<int?> fillMissing(List<int?> sequenceWithNulls)
         {
-            Func<int, List<int?>, int> itemGenerator = findItemGenerator(sequenceWithNulls);
-            
+            Func<int?, List<int?>, int?> itemGenerator = findItemGeneratorFunction(sequenceWithNulls);
+
+            if (itemGenerator == null) throw new Exception("Could not find item generator function.");
+
+            Console.WriteLine(itemGenerator);
+
             List<int?> newSequence=new List<int?>();
             for (int i = 0; i < sequenceWithNulls.Count; i++)
             {
@@ -126,52 +184,82 @@ namespace SmartieIQ
             return newSequence;
         }
 
-        static List<Func<int, List<int?>, int>> functions =
-            new List<Func<int, List<int?>, int>>{
-                                                         new Func<int, List<int?>, int>(
-                                                             (
-                                                                 indexOfItemWanted, sequenceWithNulls) => indexOfItemWanted+0
-                                                             ),
-                                                         new Func<int, List<int?>, int>(
-                                                             (
-                                                                 indexOfItemWanted, sequenceWithNulls) => indexOfItemWanted+1
-                                                             ),
-                                                         new Func<int, List<int?>, int>(
-                                                             (
-                                                                 indexOfItemWanted, sequenceWithNulls) => indexOfItemWanted+2
-                                                             ),
-                                                         new Func<int, List<int?>, int>(
-                                                             (
-                                                            indexOfItemWanted, sequenceWithNulls) => (indexOfItemWanted+0)*2
-                                                             ),
-                                                         new Func<int, List<int?>, int>(
-                                                             (
-                                                                 indexOfItemWanted, sequenceWithNulls) => (indexOfItemWanted+1)*2
-                                                             ),
-                                                         new Func<int, List<int?>, int>(
-                                                             (
-                                                                 indexOfItemWanted, sequenceWithNulls) => (indexOfItemWanted+2)*2
-                                                                 )
-            };
 
-        private static Func<int, List<int?>, int> findItemGenerator(List<int?> givenSequence)
-        {
-            foreach (Func<int, List<int?>, int> function in functions)
-            {
-                if (isFunctionIsValidForAllKnownItemsInSequence(function, givenSequence))
-                {
-                    return function;
-                }
-            }
+        private static Func<int?, List<int?>, int?> findItemGeneratorFunction(List<int?> targetSequence){
             
-            throw new Exception("No item generator function found");
+            List<int?> identitySequence=new List<int?>();
+            for(int i=0;i<targetSequence.Count;i++){
+                identitySequence.Add(i);
+            }
+
+            return findItemGeneratorFunction(identitySequence, targetSequence, 5);
         }
 
-        private static bool isFunctionIsValidForAllKnownItemsInSequence(Func<int, List<int?>, int> function, List<int?> givenItems)
+        private static Func<int?, List<int?>, int?> findItemGeneratorFunction(List<int?> currentSequence, List<int?> targetSequence, int maxDepth)
+        {
+            Console.WriteLine(maxDepth);
+            Console.WriteLine(makeHumanReadable(currentSequence));
+            Console.WriteLine();
+            
+            if (isSameIgnoreNull(currentSequence,targetSequence))
+            {
+                return identityFunction;
+            }
+
+             foreach (Func<int?, List<int?>, int?> basicFunction in basicFunctions)
+            {
+                List<int?> mappedSequence = map(basicFunction, currentSequence);
+                if (isSameIgnoreNull(mappedSequence,targetSequence))
+            {
+                return basicFunction;
+                }
+             }
+
+            if (maxDepth<1) return null;
+
+            foreach (Func<int?, List<int?>, int?> basicFunction in basicFunctions)
+            {
+                List<int?> mappedCurrentSequence = map(basicFunction, currentSequence);
+                Func<int?, List<int?>, int?> subFunction = findItemGeneratorFunction(mappedCurrentSequence, targetSequence, maxDepth - 1);
+
+                if (subFunction != null)
+                {
+                    Func<int?, List<int?>, int?> newFunction =
+                        (value, sequence) =>
+                        {
+                            return subFunction(
+                                basicFunction(
+                                    value,
+                                    sequence
+                                    ),
+                                sequence
+                            );
+                        };
+
+                  return newFunction;
+                }
+            }
+
+            return null;
+        }
+
+        private static List<int?> map(Func<int?, List<int?>, int?> function, List<int?> list)
+        {
+            List<int?> newList = new List<int?>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                newList.Add(function(list[i], list)); //This is right
+            }
+            return newList;
+        }
+        /*
+        private static bool doesThisFunctionGenerateThisSequence(Func<int?, List<int?>, int?> function, List<int?> givenItems)
         {
             for (int i = 0; i < givenItems.Count; i++)
             {
-                if (givenItems[i] != null) //If it's null then this item is deemed ok.
+                if (givenItems[i] != null) 
+                    //If it's null then this item is deemed ok.
+                    //(Since we don't know what it should be)
                 {
                     if (function(i,givenItems) != givenItems[i])
                     {
@@ -181,6 +269,6 @@ namespace SmartieIQ
             }
             return true;
         }
-
+        */
     }
 }
