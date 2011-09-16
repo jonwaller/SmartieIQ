@@ -10,8 +10,7 @@ namespace SmartieIQ
     class Program
     {
 
-        public static readonly int MAX_DEPTH=4;
-		public static List<Func<int, int>> FUNCTION_TREE = new List<Func<int,int>>();
+        public static readonly int MAX_DEPTH=5;
 
         public class CouldNotFindGeneratorFunctionException : System.Exception
         {
@@ -21,12 +20,7 @@ namespace SmartieIQ
         /* Console and testing */
 
         static void Main(string[] args)
-        {
-			Console.WriteLine("Calculating tree...");
-			FUNCTION_TREE = getFunctionTree(MAX_DEPTH);
-			Console.WriteLine("Done. (Size=" + FUNCTION_TREE.Count+ ")");
-			Console.WriteLine();
-			
+        {		
             //Nullable int
             List<int?> question = new List<int?> { 1, 2, 3, 4, 5, null };
             List<int> answer = new List<int> { 1, 2, 3, 4, 5, 6 };
@@ -170,13 +164,11 @@ namespace SmartieIQ
 
 
 
-        static Func<int,int> identityFunction = new Func<int,int> ((i)=>i);
+       static Func<int,int> identityFunction = new Func<int,int> ((i)=>i);
 
        static List<Func<int, int>> basic1ArgFuncs =
             
            new List<Func<int, int>>{
-                new Func<int, int>((i) => 0),
-				new Func<int, int>((i) => 1),
 				new Func<int, int>((i) => -1)
     };
 
@@ -189,15 +181,6 @@ namespace SmartieIQ
              (i, j) =>i*j
         )
     };
-        /*//Need?
-                             //list[i]
-                            new Func<int, List<int>, int> ( 
-                                delegate(int value, List<int>list) {
-                                     if (value<0 || value>=list.Count) throw new InvalidOperationException();
-                                     return list[value];
-                                }
-                           )
-         */
         private static List<int> fillMissing(List<int?> sequenceWithNulls)
         {
             Func<int, int> itemGeneratorFunction = findItemGeneratorFunction(sequenceWithNulls);
@@ -224,23 +207,13 @@ namespace SmartieIQ
         
           private static Func<int, int> findItemGeneratorFunction(List<int?> questionSequence){
 
-			  //Just in case someone is giving me something very easy.
-			  if (isASameBWhenIgnoreBNull(getIdentitySequence(questionSequence.Count), questionSequence))
-			  {
-				  return identityFunction;
-			  }
-
-			  
-			  foreach (Func<int, int> function in FUNCTION_TREE)
-			  {				  
-				  if (createMakesMatchingSequence(function, questionSequence))
-				  {
-					  return function;
-				  }
+			  for (int currentDepth=0;currentDepth<MAX_DEPTH;currentDepth++){
+				Func<int, int>itemGeneratorFunction = findItemGeneratorFunction(getIdentitySequence(questionSequence.Count), questionSequence, currentDepth);
+				if (itemGeneratorFunction!=null) return itemGeneratorFunction;
 			  }
 
             return null;
-        }
+		  }
 
 		  private static bool createMakesMatchingSequence(Func<int, int> function, List<int?> questionSequence)
 		  {
@@ -311,7 +284,62 @@ namespace SmartieIQ
               return functionTree;
           }
 
+
+		  
+	private static Func<int, int> findItemGeneratorFunction(List<int> currentSequence, List<int?> questionSequence, int maxDepth)
+	{
+
+		//i
+		if (isASameBWhenIgnoreBNull(currentSequence, questionSequence))
+		{
+			return identityFunction;
+		}
+
+		//-1
+		foreach (Func<int,int> basic1ArgFunc in basic1ArgFuncs)
+		{
+			List<int> mappedSequence = map(basic1ArgFunc, currentSequence);
+			if (isASameBWhenIgnoreBNull(mappedSequence, questionSequence))
+			{
+				return basic1ArgFunc;
+			}
+		}
+
+		if (maxDepth<1) return null;
+
+		//Chain from identity item to answer item
+		foreach (Func<int, int> basic1ArgFunc in basic1ArgFuncs)
+		{
+				List<int> mappedCurrentSequence = map(basic1ArgFunc, currentSequence);
+				Func<int, int> subFunction = findItemGeneratorFunction(mappedCurrentSequence, questionSequence, maxDepth - 1);
+
+				if (subFunction != null)
+				{
+					Func<int, int> newFunction =
+						(value) =>
+						{
+							return subFunction(
+								basic1ArgFunc(value)                                    
+							);
+						};
+					return newFunction;
+				}
+
+		}
+      
+      List<Func<int,int>> functionTree=getFunctionTree(maxDepth-1);
+	  foreach (Func<int, int> function in functionTree)
+	  {				  
+		  if (createMakesMatchingSequence(function, questionSequence))
+		  {
+			  return function;
+		  }
+	  }
         
+		return null;
+	}
+	
+     
 
         private static bool isASameBWhenIgnoreBNull(List<int> a, List<int?> b)
         {
