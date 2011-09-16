@@ -175,10 +175,6 @@ namespace SmartieIQ
                  new List<Func<int, List<int>, int>>{
                      
                     new Func<int, List<int>, int>( 
-                        (value, list)=>0
-                    ),
-
-                    new Func<int, List<int>, int>( 
                         (value, list)=>1
                     ),
 
@@ -194,14 +190,14 @@ namespace SmartieIQ
                         }
                    )
               };
-      
-        static List<Func<int?, int?, int?>> basicOperators =
-    new List<Func<int?, int?, int?>>{
-         new Func<int?, int?, int?>(
-            (i, j) =>(i==null||j==null)?null:i+j
+
+        static List<Func<int, int, int>> basicOperators =
+    new List<Func<int, int, int>>{
+         new Func<int, int, int>(
+            (i, j) =>i+j
         ),
-         new Func<int?, int?, int?>(
-             (i, j) =>(i==null||j==null)?null:i*j
+         new Func<int, int, int>(
+             (i, j) =>i*j
         )
     };
 
@@ -303,29 +299,46 @@ namespace SmartieIQ
                     //Function is bad, ignore it.
                 }
             }
-            /*
+            
             //Basic (i, j) operators
-            foreach (Func<int, List<int>, int> basicFunction in basicFunctions)
+            foreach (Func<int, int, int> basicOperator in basicOperators)
             {
-                try
+                foreach (Func<int, List<int>, int> basicFunction1 in basicFunctions)
                 {
-                    List<int> mappedCurrentSequence = map(basicFunction, currentSequence);
-                    Func<int, List<int>, int> subFunction = findItemGeneratorFunction(mappedCurrentSequence, questionSequence, maxDepth - 1);
+                    foreach (Func<int, List<int>, int> basicFunction2 in basicFunctions)
+                    {
+                        try
+                {
+                   //Not sure
+                    List<int> mapBasicFunc1 = map(basicFunction1, currentSequence);
+                    List<int> mapBasicFunc2 = map(basicFunction2, currentSequence);
 
+                    List<int> mapBasicOp = map(basicOperator, mapBasicFunc1, mapBasicFunc2);
+
+                    Func<int, List<int>, int> subFunction = findItemGeneratorFunction(mapBasicOp, questionSequence, maxDepth - 1);
 
                     if (subFunction != null)
                     {
                         Func<int, List<int>, int> newFunction =
                             (value, sequence) =>
                             {
-                                return subFunction(
-                                    basicFunction(
-                                        value,
-                                        sequence
-                                        ),
-                                    sequence
-                                );
+                                return
+                                    subFunction(
+                                        basicOperator(
+                                            basicFunction1(
+                                                value,
+                                                sequence
+                                            ),
+                                            basicFunction2(
+                                                value,
+                                                sequence
+                                            )
+                                           ),
+                                            sequence
+                                        );
+                                    
                             };
+                       
                         return newFunction;
                     }
                 }
@@ -333,10 +346,14 @@ namespace SmartieIQ
                 {
                     //Function is bad, ignore it.
                 }
+                    }
+                }
             }
-        */
+        
             return null;
         }
+
+
 
         private static bool isASameBWhenIgnoreBNull(List<int> a, List<int?> b)
         {
@@ -361,6 +378,18 @@ namespace SmartieIQ
             for (int i = 0; i < list.Count; i++)
             {
                 newList.Add(function(list[i], list)); //This is right
+            }
+            return newList;
+        }
+
+        private static List<int> map(Func<int, int, int> op, List<int> list1, List<int> list2)
+        {
+            if (list1.Count != list2.Count) throw new Exception("This shouldn't happen!");
+            
+            List<int> newList = new List<int>();
+            for (int i = 0; i < list1.Count; i++)
+            {
+                newList.Add(op(list1[i], list2[i])); 
             }
             return newList;
         }
