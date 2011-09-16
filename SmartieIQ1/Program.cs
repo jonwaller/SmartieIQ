@@ -10,28 +10,27 @@ namespace SmartieIQ
     class Program
     {
 
-        public static readonly int MAX_DEPTH=5;
+        public static readonly int MAX_DEPTH=4;
+		public static List<Func<int, int>> FUNCTION_TREE = new List<Func<int,int>>();
 
-        public class UnknownResultException : System.Exception
-        {
-            public UnknownResultException() : base() { }
-        }
-
-         public class CouldNotFindGeneratorFunctionException : System.Exception
+        public class CouldNotFindGeneratorFunctionException : System.Exception
         {
              public CouldNotFindGeneratorFunctionException() : base() { }
-        }
-
-        
+        }      
         
         /* Console and testing */
 
         static void Main(string[] args)
         {
+			Console.WriteLine("Calculating tree...");
+			FUNCTION_TREE = getFunctionTree(MAX_DEPTH);
+			Console.WriteLine("Done. (Size=" + FUNCTION_TREE.Count+ ")");
+			Console.WriteLine();
+			
             //Nullable int
             List<int?> question = new List<int?> { 1, 2, 3, 4, 5, null };
             List<int> answer = new List<int> { 1, 2, 3, 4, 5, 6 };
-            //isSameConsoleWrite(question, fillMissing(question), answer);
+            writeResultToConsole(question,answer);
 
             question = new List<int?> { 1, 2, null, 4, 5 };
             answer = new List<int> { 1, 2, 3, 4, 5 };
@@ -92,39 +91,41 @@ namespace SmartieIQ
             if (foundFunction && isSame(attemptedAnswer, correctAnswer))
             {
                 Console.WriteLine("PASS:");
-                Console.WriteLine("  Question: " + makeHumanReadable(question));
-                Console.WriteLine("  Answer:   " + makeHumanReadable(attemptedAnswer));
+                Console.WriteLine("  Question: " + getHumanReadable(question));
+                Console.WriteLine("  Answer:   " + getHumanReadable(attemptedAnswer));
             }
             else if (foundFunction)
             {
                 Console.WriteLine("FAIL:");
-                Console.WriteLine("  Question:        " + makeHumanReadable(question));
-                Console.WriteLine("  System's answer: " + makeHumanReadable(attemptedAnswer));
-                Console.WriteLine("  Correct answer:  " + makeHumanReadable(correctAnswer));
+                Console.WriteLine("  Question:        " + getHumanReadable(question));
+                Console.WriteLine("  System's answer: " + getHumanReadable(attemptedAnswer));
+                Console.WriteLine("  Correct answer:  " + getHumanReadable(correctAnswer));
             }
             else { //foundFunction==false
                 Console.WriteLine("FAIL:");
-                Console.WriteLine("  Question:        " + makeHumanReadable(question));
+                Console.WriteLine("  Question:        " + getHumanReadable(question));
                 Console.WriteLine("  System's answer: Couldn't determine pattern.");
-                Console.WriteLine("  Correct answer:  " + makeHumanReadable(correctAnswer));
+                //Console.WriteLine("  Correct answer:  " + getHumanReadable(correctAnswer));
             }
             Console.WriteLine();
         }
 
-        private static string makeHumanReadable(List<int> list) {
+        private static string getHumanReadable(List<int> list)
+        {
             List<int?> listWithNullables = list.ConvertAll<int?>(delegate(int i) { return i; });
-            return makeHumanReadable(listWithNullables);
+            return getHumanReadable(listWithNullables);
         }
 
-        private static string makeHumanReadable(List<int?> list)
+        private static string getHumanReadable(List<int?> list)
         {
             String outStr = "";
 
             outStr = "{";
             
             foreach(int? item in list){
-                String itemStr = (item==null) ? "NULL" : item.ToString();
-                outStr = outStr + itemStr + ", ";
+                string itemStr = (item==null) ? "NULL" : item.ToString();
+                string extraSpace = (item!=null && item>=0)?" ":"";
+                outStr = outStr + extraSpace + itemStr + ", ";
             }
 
             if (outStr.Length > 1)
@@ -169,29 +170,17 @@ namespace SmartieIQ
 
 
 
-        static Func<int, List<int>, int> identityFunction = new Func<int, List<int>, int>((value,list) => value);
-      
-        static List<Func<int, List<int>, int>> basicFunctions =
-                 new List<Func<int, List<int>, int>>{
-                     
-                    new Func<int, List<int>, int>( 
-                        (value, list)=>1
-                    ),
+        static Func<int,int> identityFunction = new Func<int,int> ((i)=>i);
 
-                    new Func<int, List<int>, int>(
-                        (value, list)=>-1
-                    ),
+       static List<Func<int, int>> basic1ArgFuncs =
+            
+           new List<Func<int, int>>{
+                new Func<int, int>((i) => 0),
+				new Func<int, int>((i) => 1),
+				new Func<int, int>((i) => -1)
+    };
 
-                    //list[i]
-                    new Func<int, List<int>, int> ( 
-                        delegate(int value, List<int>list) {
-                             if (value<0 || value>=list.Count) throw new InvalidOperationException();
-                             return list[value];
-                        }
-                   )
-              };
-
-        static List<Func<int, int, int>> basicOperators =
+        static List<Func<int, int, int>> basic2ArgFuncs =
     new List<Func<int, int, int>>{
          new Func<int, int, int>(
             (i, j) =>i+j
@@ -200,25 +189,27 @@ namespace SmartieIQ
              (i, j) =>i*j
         )
     };
-
+        /*//Need?
+                             //list[i]
+                            new Func<int, List<int>, int> ( 
+                                delegate(int value, List<int>list) {
+                                     if (value<0 || value>=list.Count) throw new InvalidOperationException();
+                                     return list[value];
+                                }
+                           )
+         */
         private static List<int> fillMissing(List<int?> sequenceWithNulls)
         {
-            Func<int, List<int>, int> itemGeneratorFunction = findItemGeneratorFunction(sequenceWithNulls);
+            Func<int, int> itemGeneratorFunction = findItemGeneratorFunction(sequenceWithNulls);
 
             if (itemGeneratorFunction == null) throw new CouldNotFindGeneratorFunctionException();
 
             return create(itemGeneratorFunction,sequenceWithNulls.Count);
         }
 
-        private static List<int> create(Func<int, List<int>, int> function,int lengthRequested)
+        private static List<int> create(Func<int, int> function,int lengthRequested)
         {
-            List<int> newSequence = new List<int>();
-            for (int i = 0; i < lengthRequested; i++)
-            {
-                int item = function(i, getIdentitySequence(lengthRequested));
-                newSequence.Add(item);
-            }
-            return newSequence;
+            return map(function, getIdentitySequence(lengthRequested));
         }
 
         private static List<int> getIdentitySequence(int lengthRequested)
@@ -231,129 +222,96 @@ namespace SmartieIQ
             return identitySequence;
         }
         
-        private static Func<int, List<int>, int> findItemGeneratorFunction(List<int?> questionSequence){
+          private static Func<int, int> findItemGeneratorFunction(List<int?> questionSequence){
 
-            //Iterative breadth-first search
-            for (int i = 0; i < MAX_DEPTH; i++)
-            {
-                Func<int,List<int>,int> itemGeneratorFunction = findItemGeneratorFunction(getIdentitySequence(questionSequence.Count), questionSequence, i);
-                if (itemGeneratorFunction != null) return itemGeneratorFunction;
-            }
+			  //Just in case someone is giving me something very easy.
+			  if (isASameBWhenIgnoreBNull(getIdentitySequence(questionSequence.Count), questionSequence))
+			  {
+				  return identityFunction;
+			  }
+
+			  
+			  foreach (Func<int, int> function in FUNCTION_TREE)
+			  {				  
+				  if (createMakesMatchingSequence(function, questionSequence))
+				  {
+					  return function;
+				  }
+			  }
+
             return null;
         }
 
-        private static Func<int, List<int>, int> findItemGeneratorFunction(List<int> currentSequence, List<int?> questionSequence, int maxDepth)
-        {
-            //Console.WriteLine(maxDepth);
-            //Console.WriteLine(makeHumanReadable(currentSequence));
-            //Console.WriteLine();
+		  private static bool createMakesMatchingSequence(Func<int, int> function, List<int?> questionSequence)
+		  {
+			  for (int i = 0; i < questionSequence.Count; i++)
+			  {
+				  if (questionSequence[i] != null)
+				  {
+					  if (function(i) != questionSequence[i])
+					  {
+						  return false;
+					  }
+				  }
+			  }
+			  return true;
+		  }
 
-            if (isASameBWhenIgnoreBNull(currentSequence, questionSequence))
-            {
-                return identityFunction;
-            }
+          private static List<Func<int, int>> getFunctionTree(int currentDepth)
+          {
+              List<Func<int, int>> functionTree=new List<Func<int,int>>();
 
-            foreach (Func<int, List<int>, int> basicFunction in basicFunctions)
-            {
-                try
-                {
-                    List<int> mappedSequence = map(basicFunction, currentSequence);
-                    if (isASameBWhenIgnoreBNull(mappedSequence, questionSequence))
-                    {
-                        return basicFunction;
-                    }
-                }catch(InvalidOperationException){
-                    //Bad function, ignore it.
-                }
-            }
+			  foreach (Func<int,int> basic1ArgFunc in basic1ArgFuncs){
+			   	  functionTree.Add(basic1ArgFunc);                      
+			  }
 
-            if (maxDepth<1) return null;
+			  if (currentDepth > 0)
+			  {
+				  List<Func<int, int>> subFunctionTree = getFunctionTree(currentDepth - 1);
 
-            //Basic (index, sequence) functions
-            foreach (Func<int, List<int>, int> basicFunction in basicFunctions)
-            {
-                try
-                {
-                    List<int> mappedCurrentSequence = map(basicFunction, currentSequence);
-                    Func<int, List<int>, int> subFunction = findItemGeneratorFunction(mappedCurrentSequence, questionSequence, maxDepth - 1);
+				  //Chains
+				  foreach (Func<int, int> basic1ArgFunc in basic1ArgFuncs)
+				  {
+					  foreach (Func<int, int> complex1ArgFunc in subFunctionTree)
+					  {
+						  functionTree.Add(
+							  (value) =>
+							  {
+								  return basic1ArgFunc(
+									  complex1ArgFunc(value)
+								  );
+							  }
+							  );
+					  }
+				  }
 
 
-                    if (subFunction != null)
-                    {
-                        Func<int, List<int>, int> newFunction =
-                            (value, sequence) =>
-                            {
-                                return subFunction(
-                                    basicFunction(
-                                        value,
-                                        sequence
-                                        ),
-                                    sequence
-                                );
-                            };
-                        return newFunction;
-                    }
-                }
-                catch (InvalidOperationException)
-                {
-                    //Function is bad, ignore it.
-                }
-            }
-            
-            //Basic (i, j) operators
-            foreach (Func<int, int, int> basicOperator in basicOperators)
-            {
-                foreach (Func<int, List<int>, int> basicFunction1 in basicFunctions)
-                {
-                    foreach (Func<int, List<int>, int> basicFunction2 in basicFunctions)
-                    {
-                        try
-                {
-                   //Not sure
-                    List<int> mapBasicFunc1 = map(basicFunction1, currentSequence);
-                    List<int> mapBasicFunc2 = map(basicFunction2, currentSequence);
+				  //Operators
+				  foreach (Func<int, int, int> basic2ArgFunc in basic2ArgFuncs)
+				  {
+					  foreach (Func<int, int> complex1ArgFuncA in subFunctionTree)
+					  {
+						  foreach (Func<int, int> complex1ArgFuncB in subFunctionTree)
+						  {
+							  functionTree.Add(
+								  (value) =>
+								  {
+									  return basic2ArgFunc(
+										  complex1ArgFuncA(value),
+										  complex1ArgFuncB(value)
+									  );
+								  }
+								  );
+						  }
+					  }
+				  } //Operators
 
-                    List<int> mapBasicOp = map(basicOperator, mapBasicFunc1, mapBasicFunc2);
+			  } //If (currentDepth > 0)
 
-                    Func<int, List<int>, int> subFunction = findItemGeneratorFunction(mapBasicOp, questionSequence, maxDepth - 1);
+              return functionTree;
+          }
 
-                    if (subFunction != null)
-                    {
-                        Func<int, List<int>, int> newFunction =
-                            (value, sequence) =>
-                            {
-                                return
-                                    subFunction(
-                                        basicOperator(
-                                            basicFunction1(
-                                                value,
-                                                sequence
-                                            ),
-                                            basicFunction2(
-                                                value,
-                                                sequence
-                                            )
-                                           ),
-                                            sequence
-                                        );
-                                    
-                            };
-                       
-                        return newFunction;
-                    }
-                }
-                catch (InvalidOperationException)
-                {
-                    //Function is bad, ignore it.
-                }
-                    }
-                }
-            }
         
-            return null;
-        }
-
-
 
         private static bool isASameBWhenIgnoreBNull(List<int> a, List<int?> b)
         {
@@ -372,12 +330,12 @@ namespace SmartieIQ
             return true;
         }
 
-        private static List<int> map(Func<int, List<int>, int> function, List<int> list)
+        private static List<int> map(Func<int, int> function, List<int> list)
         {
             List<int> newList = new List<int>();
             for (int i = 0; i < list.Count; i++)
             {
-                newList.Add(function(list[i], list)); //This is right
+                newList.Add(function(list[i])); //This is right
             }
             return newList;
         }
@@ -396,21 +354,3 @@ namespace SmartieIQ
 
     }
 }
-/* NOT YET
-
-*/
-/*
-private static bool isSameIgnoreNull(List<int?> list1, List<int?> list2)
-{
-    if (list1.Count != list2.Count) return false;
-
-    for (int i = 0; i < list1.Count; i++)
-    {
-        if (list1[i] != list2[i] && list1[i] != null && list2[i] != null)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-*/
