@@ -28,7 +28,7 @@ namespace SmartieIQ
 			question = new List<int?> { 1, 2, 3, null };
 			answer = new List<int> { 1, 2, 3, 4 };
 			writeResultToConsole(question, answer); 
-
+			
 			question = new List<int?> { 1, 2, null, 4, 5 };
 			answer = new List<int> { 1, 2, 3, 4, 5 };
 			writeResultToConsole(question, answer);
