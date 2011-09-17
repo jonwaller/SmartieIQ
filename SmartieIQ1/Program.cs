@@ -18,13 +18,20 @@ namespace SmartieIQ
         {		
             	
 			//Nullable int
-            List<int?> question = new List<int?> { 1, 2, 3, 4, 5, null };
-            List<int> answer = new List<int> { 1, 2, 3, 4, 5, 6 };
-            writeResultToConsole(question,answer);
+			List<int?> question = new List<int?>();
+            List<int> answer = new List<int>();
 
-            question = new List<int?> { 1, 2, null, 4, 5 };
-            answer = new List<int> { 1, 2, 3, 4, 5 };
-            writeResultToConsole(question, answer);
+			question = new List<int?> { 0, 1, 2, null};
+			answer = new List<int> { 0,1,2,3};
+			writeResultToConsole(question, answer);
+
+			question = new List<int?> { 1, 2, 3, null };
+			answer = new List<int> { 1, 2, 3, 4 };
+			writeResultToConsole(question, answer); 
+
+			question = new List<int?> { 1, 2, null, 4, 5 };
+			answer = new List<int> { 1, 2, 3, 4, 5 };
+			writeResultToConsole(question, answer);
 
             question = new List<int?> { 2, 4, 6, 8, null };
             answer = new List<int> { 2, 4, 6, 8, 10 };
@@ -44,10 +51,6 @@ namespace SmartieIQ
 
             question = new List<int?> { 154, 162, 170, 178, 186, null };
             answer = new List<int> { 154, 162, 170, 178, 186, 194 }; //+8
-            writeResultToConsole(question, answer);
-
-            question = new List<int?> { 2, -4, 8, -16, 32, null };
-            answer = new List<int> { 2, -4, 8, -16, 32, -64 };
             writeResultToConsole(question, answer);
 
             question = new List<int?> { 1, 4, null, null, null, 36, null };
