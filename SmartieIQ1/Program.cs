@@ -15,8 +15,8 @@ namespace SmartieIQ
         /* Console and testing */
 
         static void Main(string[] args)
-        {		
-            	
+        {
+
 			//Nullable int
 			List<int?> question = new List<int?>();
             List<int> answer = new List<int>();
